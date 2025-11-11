@@ -18,11 +18,7 @@ class ModelService {
   Future<Map<String, dynamic>> detectObjects(File imageFile) async {
     if (_interpreter == null) {
       print("Model belum dimuat. Jalankan loadModel() dulu.");
-      return {
-        "detections": [],
-        "originalWidth": 0,
-        "originalHeight": 0,
-      };
+      return {"detections": [], "originalWidth": 0, "originalHeight": 0};
     }
 
     // decode gambar
@@ -30,14 +26,10 @@ class ModelService {
     final img.Image? decoded = img.decodeImage(bytes);
     if (decoded == null) {
       print("Gagal decode gambar.");
-      return {
-        "detections": [],
-        "originalWidth": 0,
-        "originalHeight": 0,
-      };
+      return {"detections": [], "originalWidth": 0, "originalHeight": 0};
     }
 
-    // resize 
+    // resize
     final ResizeResult resizedResult = resizeWithPadding(decoded, 640, 640);
     final img.Image resized = resizedResult.image;
     final double scale = resizedResult.scale;
@@ -72,26 +64,22 @@ class ModelService {
 
     for (var i = 0; i < outputData.length; i++) {
       final det = outputData[i];
-      final double x = det[0];
-      final double y = det[1];
-      final double w = det[2];
-      final double h = det[3];
-      final double conf = det[4];
-      final int classId = det[5].toInt();
+
+      double x1 = det[0];
+      double y1 = det[1];
+      double x2 = det[2];
+      double y2 = det[3];
+      double conf = det[4];
+      int classId = det[5].toInt();
 
       if (conf < confThreshold) continue;
 
-      // konversi yolo ke koordinat gambar asli
-      double x1 = (x - w / 2);
-      double y1 = (y - h / 2);
-      double x2 = (x + w / 2);
-      double y2 = (y + h / 2);
-
-      // unscale ke ukuran asli gambar
+      //  Koreksi arah scaling
       x1 = ((x1 * 640 - padX) / scale).clamp(0, decoded.width.toDouble());
       y1 = ((y1 * 640 - padY) / scale).clamp(0, decoded.height.toDouble());
       x2 = ((x2 * 640 - padX) / scale).clamp(0, decoded.width.toDouble());
       y2 = ((y2 * 640 - padY) / scale).clamp(0, decoded.height.toDouble());
+
 
       detections.add({
         "label": _getLabel(classId),
@@ -129,22 +117,33 @@ class ModelService {
     return labels[index];
   }
 
-  // resize + padding 
-  ResizeResult resizeWithPadding(img.Image src, int targetWidth, int targetHeight) {
-    double scale = (src.width / src.height) > (targetWidth / targetHeight)
-        ? targetWidth / src.width
-        : targetHeight / src.height;
+  // resize + padding
+  ResizeResult resizeWithPadding(
+    img.Image src,
+    int targetWidth,
+    int targetHeight,
+  ) {
+    final double ratioX = targetWidth / src.width;
+    final double ratioY = targetHeight / src.height;
+    final double scale = ratioX < ratioY ? ratioX : ratioY;
 
-    int newWidth = (src.width * scale).round();
-    int newHeight = (src.height * scale).round();
+    final int newWidth = (src.width * scale).round();
+    final int newHeight = (src.height * scale).round();
 
-    img.Image resized = img.copyResize(src, width: newWidth, height: newHeight);
+    final img.Image resized = img.copyResize(
+      src,
+      width: newWidth,
+      height: newHeight,
+    );
 
-    img.Image padded = img.Image(width: targetWidth, height: targetHeight);
+    final int padX = ((targetWidth - newWidth) / 2).round();
+    final int padY = ((targetHeight - newHeight) / 2).round();
+
+    final img.Image padded = img.Image(
+      width: targetWidth,
+      height: targetHeight,
+    );
     img.fill(padded, color: img.ColorRgb8(0, 0, 0));
-
-    int padX = ((targetWidth - newWidth) / 2).round();
-    int padY = ((targetHeight - newHeight) / 2).round();
     img.compositeImage(padded, resized, dstX: padX, dstY: padY);
 
     return ResizeResult(padded, scale, padX, padY);

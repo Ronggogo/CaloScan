@@ -57,7 +57,8 @@ class _ResultScreenState extends State<ResultScreen> {
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final double maxDisplayWidth = constraints.maxWidth;
-                      final double displayHeight = maxDisplayWidth *
+                      final double displayHeight =
+                          maxDisplayWidth *
                           (_imageHeight / _imageWidth); // jaga rasio
 
                       return Center(
@@ -83,17 +84,19 @@ class _ResultScreenState extends State<ResultScreen> {
                                 final label = det["label"];
                                 final conf = det["conf"];
 
-                                // hitung rasio antara resolusi asli dan tampilan
-                                final double xRatio =
-                                    maxDisplayWidth / _imageWidth;
-                                final double yRatio =
-                                    displayHeight / _imageHeight;
-
+                             
                                 return Positioned(
-                                  left: left * xRatio,
-                                  top: top * yRatio,
-                                  width: (right - left) * xRatio,
-                                  height: (bottom - top) * yRatio,
+                                  left: left / _imageWidth * maxDisplayWidth,
+                                  top: top / _imageHeight * displayHeight,
+                                  width:
+                                      (right - left) /
+                                      _imageWidth *
+                                      maxDisplayWidth,
+                                  height:
+                                      (bottom - top) /
+                                      _imageHeight *
+                                      displayHeight,
+
                                   child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
@@ -104,8 +107,9 @@ class _ResultScreenState extends State<ResultScreen> {
                                     child: Align(
                                       alignment: Alignment.topLeft,
                                       child: Container(
-                                        color:
-                                            Colors.orangeAccent.withOpacity(0.8),
+                                        color: Colors.orangeAccent.withOpacity(
+                                          0.8,
+                                        ),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 6,
                                           vertical: 3,
@@ -145,7 +149,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     (d) => Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: Text(
-                        "🍽 ${d["label"]} - "
+                        "${d["label"]} - "
                         "Confidence: ${(d["conf"] * 100).toStringAsFixed(1)}%",
                         style: const TextStyle(fontSize: 16),
                       ),
