@@ -53,7 +53,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Gambar dengan deteksi di atasnya
+                  // gambar dengan deteksi di atasnya
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final double maxDisplayWidth = constraints.maxWidth;
@@ -144,13 +144,14 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Daftar hasil deteksi
+                  // daftar hasil deteksi
                   ..._detections.map(
                     (d) => Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: Text(
                         "${d["label"]} - "
-                        "Confidence: ${(d["conf"] * 100).toStringAsFixed(1)}%",
+                        "Confidence: ${(d["conf"] * 100).toStringAsFixed(1)}%"
+                        "${d.containsKey("ratio") ? "| Rasio: ${(d["ratio"] * 100).toStringAsFixed(1)}%" : ""}",
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),

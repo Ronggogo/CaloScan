@@ -74,12 +74,11 @@ class ModelService {
 
       if (conf < confThreshold) continue;
 
-      //  Koreksi arah scaling
+      //  koreksi arah scaling
       x1 = ((x1 * 640 - padX) / scale).clamp(0, decoded.width.toDouble());
       y1 = ((y1 * 640 - padY) / scale).clamp(0, decoded.height.toDouble());
       x2 = ((x2 * 640 - padX) / scale).clamp(0, decoded.width.toDouble());
       y2 = ((y2 * 640 - padY) / scale).clamp(0, decoded.height.toDouble());
-
 
       detections.add({
         "label": _getLabel(classId),
@@ -91,7 +90,39 @@ class ModelService {
     print("${detections.length} objek terdeteksi");
     if (detections.isEmpty) print(" Tidak ada objek di atas threshold.");
 
+    // cari piring
+    final plate = detections.firstWhere(
+      (d) => d["label"] == "piring",
+      orElse: () => <String, dynamic>{},
+    );
+
+    // deteksi makanan kalau ada piring
+    if (plate.isNotEmpty && plate["box"] != null) {
+      final plateBox = plate["box"] as List?;
+      if (plateBox != null && plateBox.length >= 4) {
+        final double pw = (plateBox[2] ?? 0) - (plateBox[0] ?? 0);
+        final double ph = (plateBox[3] ?? 0) - (plateBox[1] ?? 0);
+        final double plateArea = pw * ph;
+
+        for (var det in detections) {
+          if (det["label"] != "piring" && det["box"] != null) {
+            final box = det["box"] as List?;
+            if (box != null && box.length >= 4) {
+              final double fw = (box[2] ?? 0) - (box[0] ?? 0);
+              final double fh = (box[3] ?? 0) - (box[1] ?? 0);
+              final double foodArea = fw * fh;
+              final double ratio = foodArea / plateArea;
+
+              det["ratio"] = ratio;
+              print("${det["label"]} | ratio: $ratio");
+            }
+          }
+        }
+      }
+    }
+
     this.detections = detections;
+
     return {
       "detections": detections,
       "originalWidth": decoded.width,
