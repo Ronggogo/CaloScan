@@ -45,6 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            CircleAvatar(
+              radius: 75,
+              backgroundColor: const Color(0xFFFFBB4D),
+              child: Image.asset('assets/images/diet.png', height: 100),
+            ),
             const Text(
               "Ambil atau Unggah Gambar Makanan",
               style: TextStyle(

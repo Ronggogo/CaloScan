@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../services/model_service.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -17,6 +18,22 @@ class _ResultScreenState extends State<ResultScreen> {
   List<Map<String, dynamic>> _detections = [];
   double _imageWidth = 1;
   double _imageHeight = 1;
+  int _convertLabelToIndex(String label) {
+    const labels = [
+      'AyamBakar',
+      'AyamBumbu',
+      'Dendeng',
+      'LeleGoreng',
+      'Nasi',
+      'NilaGoreng',
+      'TahuGoreng',
+      'TelurRebus',
+      'TempeGoreng',
+      'piring',
+      'sendok',
+    ];
+    return labels.indexOf(label);
+  }
 
   @override
   void initState() {
@@ -27,6 +44,34 @@ class _ResultScreenState extends State<ResultScreen> {
   Future<void> _processImage() async {
     await _mlService.loadModel();
     final result = await _mlService.detectObjects(widget.imageFile);
+    final detections = result["detections"];
+
+    // Cari piring dulu
+    final plate = detections.firstWhere(
+      (d) => d["label"] == "piring",
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (plate.isNotEmpty) {
+      // Cari makanan (selain piring & sendok)
+      for (var det in detections) {
+        if (det["label"] != "piring" &&
+            det["label"] != "sendok" &&
+            det.containsKey("ratio")) {
+          final double ratio = det["ratio"];
+
+          final resultApi = await ApiService.predictWeight(
+            classId: _convertLabelToIndex(det["label"]),
+            ratio: ratio,
+          );
+
+          if (resultApi != null) {
+            det["estimated_weight"] = resultApi["estimated_weight"];
+            det["estimated_calories"] = resultApi["estimated_calories"];
+          }
+        }
+      }
+    }
 
     setState(() {
       _detections = result["detections"];
@@ -84,7 +129,6 @@ class _ResultScreenState extends State<ResultScreen> {
                                 final label = det["label"];
                                 final conf = det["conf"];
 
-                             
                                 return Positioned(
                                   left: left / _imageWidth * maxDisplayWidth,
                                   top: top / _imageHeight * displayHeight,
@@ -149,9 +193,11 @@ class _ResultScreenState extends State<ResultScreen> {
                     (d) => Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: Text(
-                        "${d["label"]} - "
-                        "Confidence: ${(d["conf"] * 100).toStringAsFixed(1)}%"
-                        "${d.containsKey("ratio") ? "| Rasio: ${(d["ratio"] * 100).toStringAsFixed(1)}%" : ""}",
+                        "${d["label"]} | "
+                        "conf ${(d["conf"] * 100).toStringAsFixed(1)}% | "
+                        "${d.containsKey("ratio") ? "ratio ${(d["ratio"] * 100).toStringAsFixed(1)}% | " : ""}"
+                        "${d.containsKey("estimated_weight") ? "berat ${d["estimated_weight"].toStringAsFixed(1)} gram | " : ""}"
+                        "${d.containsKey("estimated_calories") ? "${d["estimated_calories"].toStringAsFixed(1)} kkal" : ""}",
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),

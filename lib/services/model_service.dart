@@ -88,7 +88,7 @@ class ModelService {
     }
 
     print("${detections.length} objek terdeteksi");
-    if (detections.isEmpty) print(" Tidak ada objek di atas threshold.");
+    if (detections.isEmpty) print(" Tidak ada objek ");
 
     // cari piring
     final plate = detections.firstWhere(
