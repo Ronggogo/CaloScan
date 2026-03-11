@@ -6,7 +6,7 @@ class ApiService {
     required int classId,
     required double ratio,
   }) async {
-    final url = Uri.parse("http://192.168.1.46:8000/predict");
+    final url = Uri.parse("https://caloscanapi-production.up.railway.app/predict");
 
     final response = await http.post(
       url,
