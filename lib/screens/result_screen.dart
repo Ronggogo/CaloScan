@@ -47,12 +47,19 @@ class _ResultScreenState extends State<ResultScreen> {
     final detections = result["detections"];
 
     // Cari piring dulu
-    final plate = detections.firstWhere(
-      (d) => d["label"] == "piring",
-      orElse: () => <String, dynamic>{},
-    );
+    Map<String, dynamic>? plate;
+    final plates = detections
+    .where((d) => d["label"] == "piring")
+    .toList();
 
-    if (plate.isNotEmpty) {
+    if (plates.isNotEmpty) {
+      plates.sort((a, b) => (b["conf"] as double)
+          .compareTo(a["conf"] as double));
+
+      plate = plates.first;
+    }
+
+    if (plates.isNotEmpty) {
       // Cari makanan (selain piring & sendok)
       for (var det in detections) {
         if (det["label"] != "piring" &&

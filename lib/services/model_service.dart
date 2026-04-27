@@ -30,17 +30,17 @@ class ModelService {
     }
 
     // resize
-    final ResizeResult resizedResult = resizeWithPadding(decoded, 640, 640);
+    final ResizeResult resizedResult = resizeWithPadding(decoded, 800, 800);
     final img.Image resized = resizedResult.image;
     final double scale = resizedResult.scale;
     final int padX = resizedResult.padX;
     final int padY = resizedResult.padY;
 
     // normalisasi input ke [0,1]
-    final Float32List inputList = Float32List(1 * 640 * 640 * 3);
+    final Float32List inputList = Float32List(1 * 800 * 800 * 3);
     int index = 0;
-    for (int y = 0; y < 640; y++) {
-      for (int x = 0; x < 640; x++) {
+    for (int y = 0; y < 800; y++) {
+      for (int x = 0; x < 800; x++) {
         final pixel = resized.getPixel(x, y);
         inputList[index++] = pixel.r / 255.0;
         inputList[index++] = pixel.g / 255.0;
@@ -49,7 +49,7 @@ class ModelService {
     }
 
     // bentuk tensor input dan output
-    var input = inputList.reshape([1, 640, 640, 3]);
+    var input = inputList.reshape([1, 800, 800, 3]);
     var output = List.generate(
       1,
       (_) => List.generate(300, (_) => List.filled(6, 0.0)),
@@ -75,10 +75,10 @@ class ModelService {
       if (conf < confThreshold) continue;
 
       //  koreksi arah scaling
-      x1 = ((x1 * 640 - padX) / scale).clamp(0, decoded.width.toDouble());
-      y1 = ((y1 * 640 - padY) / scale).clamp(0, decoded.height.toDouble());
-      x2 = ((x2 * 640 - padX) / scale).clamp(0, decoded.width.toDouble());
-      y2 = ((y2 * 640 - padY) / scale).clamp(0, decoded.height.toDouble());
+      x1 = ((x1 * 800 - padX) / scale).clamp(0, decoded.width.toDouble());
+      y1 = ((y1 * 800 - padY) / scale).clamp(0, decoded.height.toDouble());
+      x2 = ((x2 * 800 - padX) / scale).clamp(0, decoded.width.toDouble());
+      y2 = ((y2 * 800 - padY) / scale).clamp(0, decoded.height.toDouble());
 
       detections.add({
         "label": _getLabel(classId),
@@ -91,13 +91,20 @@ class ModelService {
     if (detections.isEmpty) print(" Tidak ada objek ");
 
     // cari piring
-    final plate = detections.firstWhere(
-      (d) => d["label"] == "piring",
-      orElse: () => <String, dynamic>{},
-    );
+    Map<String, dynamic>? plate;
+    final plates = detections
+    .where((d) => d["label"] == "piring")
+    .toList();
+
+    if (plates.isNotEmpty) {
+      plates.sort((a, b) => (b["conf"] as double)
+          .compareTo(a["conf"] as double));
+
+      plate = plates.first;
+    }
 
     // deteksi makanan kalau ada piring
-    if (plate.isNotEmpty && plate["box"] != null) {
+    if (plates.isNotEmpty && plate != null && plate["box"] != null) {
       final plateBox = plate["box"] as List?;
       if (plateBox != null && plateBox.length >= 4) {
         final double pw = (plateBox[2] ?? 0) - (plateBox[0] ?? 0);
