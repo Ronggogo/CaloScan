@@ -152,9 +152,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                   bestPlate = plates.first;
                                 }
 
-                                final filteredDetections = _detections.where((
-                                  det,
-                                ) {
+                                final filteredDetections = _detections.where((det) {
                                   if (det["label"] != "piring") return true;
 
                                   return identical(det, bestPlate);
@@ -175,15 +173,8 @@ class _ResultScreenState extends State<ResultScreen> {
                                     left: left / _imageWidth * maxDisplayWidth,
                                     top: top / _imageHeight * displayHeight,
 
-                                    width:
-                                        (right - left) /
-                                        _imageWidth *
-                                        maxDisplayWidth,
-
-                                    height:
-                                        (bottom - top) /
-                                        _imageHeight *
-                                        displayHeight,
+                                    width: (right - left) / _imageWidth * maxDisplayWidth,
+                                    height:(bottom - top) /_imageHeight * displayHeight,
 
                                     child: Container(
                                       decoration: BoxDecoration(
@@ -207,7 +198,6 @@ class _ResultScreenState extends State<ResultScreen> {
 
                                           child: Text(
                                             "$label ${(conf * 100).toStringAsFixed(1)}%",
-
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 14,

@@ -103,7 +103,7 @@ class ModelService {
       plate = plates.first;
     }
 
-    // deteksi makanan kalau ada piring
+    // Mencari ratio jika piring terdeteksi
     if (plates.isNotEmpty && plate != null && plate["box"] != null) {
       final plateBox = plate["box"] as List?;
       if (plateBox != null && plateBox.length >= 4) {
@@ -112,7 +112,7 @@ class ModelService {
         final double plateArea = pw * ph;
 
         for (var det in detections) {
-          if (det["label"] != "piring" && det["box"] != null) {
+          if (det["label"] != "piring" && det["label"] != "sendok" && det["box"] != null) {
             final box = det["box"] as List?;
             if (box != null && box.length >= 4) {
               final double fw = (box[2] ?? 0) - (box[0] ?? 0);
