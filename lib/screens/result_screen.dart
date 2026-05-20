@@ -18,6 +18,8 @@ class _ResultScreenState extends State<ResultScreen> {
   List<Map<String, dynamic>> _detections = [];
   double _imageWidth = 1;
   double _imageHeight = 1;
+  double _totalCalories = 0;
+  bool _plateDetected = true;
   int _convertLabelToIndex(String label) {
     const labels = [
       'AyamBakar',
@@ -45,16 +47,16 @@ class _ResultScreenState extends State<ResultScreen> {
     await _mlService.loadModel();
     final result = await _mlService.detectObjects(widget.imageFile);
     final detections = result["detections"];
+    double totalCalories = 0;
 
-    // Cari piring dulu
+    // Cari piring
     Map<String, dynamic>? plate;
-    final plates = detections
-    .where((d) => d["label"] == "piring")
-    .toList();
+    final plates = detections.where((d) => d["label"] == "piring").toList();
 
     if (plates.isNotEmpty) {
-      plates.sort((a, b) => (b["conf"] as double)
-          .compareTo(a["conf"] as double));
+      plates.sort(
+        (a, b) => (b["conf"] as double).compareTo(a["conf"] as double),
+      );
 
       plate = plates.first;
     }
@@ -75,6 +77,7 @@ class _ResultScreenState extends State<ResultScreen> {
           if (resultApi != null) {
             det["estimated_weight"] = resultApi["estimated_weight"];
             det["estimated_calories"] = resultApi["estimated_calories"];
+            totalCalories += resultApi["estimated_calories"];
           }
         }
       }
@@ -84,6 +87,8 @@ class _ResultScreenState extends State<ResultScreen> {
       _detections = result["detections"];
       _imageWidth = (result["originalWidth"] ?? 1).toDouble();
       _imageHeight = (result["originalHeight"] ?? 1).toDouble();
+      _totalCalories = totalCalories;
+      _plateDetected = plates.isNotEmpty;
       _isLoading = false;
     });
   }
@@ -93,8 +98,11 @@ class _ResultScreenState extends State<ResultScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF2DF),
       appBar: AppBar(
-        title: const Text('Hasil Deteksi'),
-        backgroundColor: const Color(0xFFE17826),
+        title: const Text(
+          'Hasil Deteksi',
+          style: const TextStyle(color: Color(0xFFFAF3E0)),
+        ),
+        backgroundColor: const Color(0xFFE67E22),
       ),
       body: _isLoading
           ? const Center(
@@ -127,56 +135,90 @@ class _ResultScreenState extends State<ResultScreen> {
                               ),
 
                               // Gambar bounding box disesuaikan skala
-                              ..._detections.map((det) {
-                                final box = det["box"];
-                                final left = box[0];
-                                final top = box[1];
-                                final right = box[2];
-                                final bottom = box[3];
-                                final label = det["label"];
-                                final conf = det["conf"];
+                              ...(() {
+                                final plates = _detections
+                                    .where((d) => d["label"] == "piring")
+                                    .toList();
 
-                                return Positioned(
-                                  left: left / _imageWidth * maxDisplayWidth,
-                                  top: top / _imageHeight * displayHeight,
-                                  width:
-                                      (right - left) /
-                                      _imageWidth *
-                                      maxDisplayWidth,
-                                  height:
-                                      (bottom - top) /
-                                      _imageHeight *
-                                      displayHeight,
+                                Map<String, dynamic>? bestPlate;
 
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.orangeAccent,
-                                        width: 3,
-                                      ),
+                                if (plates.isNotEmpty) {
+                                  plates.sort(
+                                    (a, b) => (b["conf"] as double).compareTo(
+                                      a["conf"] as double,
                                     ),
-                                    child: Align(
-                                      alignment: Alignment.topLeft,
-                                      child: Container(
-                                        color: Colors.orangeAccent.withOpacity(
-                                          0.8,
+                                  );
+
+                                  bestPlate = plates.first;
+                                }
+
+                                final filteredDetections = _detections.where((
+                                  det,
+                                ) {
+                                  if (det["label"] != "piring") return true;
+
+                                  return identical(det, bestPlate);
+                                });
+
+                                return filteredDetections.map((det) {
+                                  final box = det["box"];
+
+                                  final left = box[0];
+                                  final top = box[1];
+                                  final right = box[2];
+                                  final bottom = box[3];
+
+                                  final label = det["label"];
+                                  final conf = det["conf"];
+
+                                  return Positioned(
+                                    left: left / _imageWidth * maxDisplayWidth,
+                                    top: top / _imageHeight * displayHeight,
+
+                                    width:
+                                        (right - left) /
+                                        _imageWidth *
+                                        maxDisplayWidth,
+
+                                    height:
+                                        (bottom - top) /
+                                        _imageHeight *
+                                        displayHeight,
+
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.orangeAccent,
+                                          width: 3,
                                         ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 3,
-                                        ),
-                                        child: Text(
-                                          "$label ${(conf * 100).toStringAsFixed(1)}%",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
+                                      ),
+
+                                      child: Align(
+                                        alignment: Alignment.topLeft,
+
+                                        child: Container(
+                                          color: Colors.orangeAccent
+                                              .withOpacity(0.8),
+
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 3,
+                                          ),
+
+                                          child: Text(
+                                            "$label ${(conf * 100).toStringAsFixed(1)}%",
+
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
+                                  );
+                                }).toList();
+                              })(),
                             ],
                           ),
                         ),
@@ -185,6 +227,18 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
 
                   const SizedBox(height: 25),
+                  if (!_plateDetected)
+                    const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Text(
+                        "Piring tidak terdeteksi!",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   const Text(
                     "Detail Deteksi",
                     style: TextStyle(
@@ -193,23 +247,38 @@ class _ResultScreenState extends State<ResultScreen> {
                       color: Color(0xFFE17826),
                     ),
                   ),
+                  
+                  
                   const SizedBox(height: 10),
 
                   // daftar hasil deteksi
-                  ..._detections.map(
-                    (d) => Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: Text(
-                        "${d["label"]} | "
-                        "conf ${(d["conf"] * 100).toStringAsFixed(1)}% | "
-                        "${d.containsKey("ratio") ? "ratio ${(d["ratio"] * 100).toStringAsFixed(1)}% | " : ""}"
-                        "${d.containsKey("estimated_weight") ? "berat ${d["estimated_weight"].toStringAsFixed(1)} gram | " : ""}"
-                        "${d.containsKey("estimated_calories") ? "${d["estimated_calories"].toStringAsFixed(1)} kkal" : ""}",
-                        style: const TextStyle(fontSize: 16),
+                  ..._detections
+                      .where(
+                        (d) => d["label"] != "piring" && d["label"] != "sendok",
+                      )
+                      .map(
+                        (d) => Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text(
+                            "${d["label"]} "
+                            ": ${d.containsKey("estimated_calories") ? "${d["estimated_calories"].toStringAsFixed(1)} kkal " : ""}"
+                            "(${d.containsKey("estimated_weight") ? "${d["estimated_weight"].toStringAsFixed(1)} gram" : ""})",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFFE17826),
+                            ),
+                          ),
+                        ),
                       ),
+                  const SizedBox(height: 30),
+                  Text(
+                    "Total Kalori: ${_totalCalories.toStringAsFixed(1)} kkal",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFD35400),
                     ),
                   ),
-                  const SizedBox(height: 30),
                 ],
               ),
             ),

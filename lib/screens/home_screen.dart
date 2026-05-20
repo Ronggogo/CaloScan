@@ -30,13 +30,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF2DF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE17826),
+        backgroundColor: const Color(0xFFE67E22),
         title: const Text(
           'CaloScan',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 26,
-            color: Colors.white,
+            color: Color(0xFFFAF3E0),
           ),
         ),
         centerTitle: true,
@@ -55,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFE17826)),
+                  color: Color(0xD35400)),
             ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.camera_alt),
               label: const Text("Ambil Gambar"),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE17826),
+                  backgroundColor: const Color(0xFFE67E22),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(220, 55)),
             ),
@@ -73,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.photo),
               label: const Text("Upload Foto"),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE17826),
+                  backgroundColor: const Color(0xFFE67E22),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(220, 55)),
             ),

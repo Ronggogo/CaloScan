@@ -55,11 +55,11 @@ class ModelService {
       (_) => List.generate(300, (_) => List.filled(6, 0.0)),
     );
 
-    // jalankan inferensi
+    // jalankan inferensi prediksi objek
     _interpreter!.run(input, output);
     final outputData = output[0]; // [300, 6]
 
-    const double confThreshold = 0.4;
+    const double confThreshold = 0.5;
     List<Map<String, dynamic>> detections = [];
 
     for (var i = 0; i < outputData.length; i++) {
@@ -95,7 +95,7 @@ class ModelService {
     final plates = detections
     .where((d) => d["label"] == "piring")
     .toList();
-
+    //urutkan piring berdasarkan confidence lalu ambil yang paling tinggi
     if (plates.isNotEmpty) {
       plates.sort((a, b) => (b["conf"] as double)
           .compareTo(a["conf"] as double));
